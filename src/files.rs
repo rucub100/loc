@@ -1,30 +1,82 @@
+use std::collections::VecDeque;
 use std::env::current_dir;
+use std::fs::{DirEntry, ReadDir};
 use std::path::PathBuf;
 
 #[derive(Debug)]
 pub enum FilesError {
     Io(std::io::Error),
-    NotADirectory,
 }
 
 pub struct Files {
-    dir: PathBuf,
+    dirs: VecDeque<PathBuf>,
+    dir_iter: ReadDir,
 }
 
 impl Files {
     pub fn new() -> Result<Self, FilesError> {
         let current_dir = current_dir().map_err(FilesError::Io)?;
+        let dir_iter = current_dir.read_dir().map_err(FilesError::Io)?;
 
         Ok(Files {
-            dir: current_dir,
+            dirs: VecDeque::new(),
+            dir_iter,
         })
+    }
+
+    fn next_entry(&mut self) -> Option<Result<DirEntry, FilesError>> {
+        let mut next_entry = self.dir_iter.next();
+
+        while next_entry.is_none() {
+            let next_dir = self.dirs.pop_front()?;
+            assert!(next_dir.is_dir());
+            let next_dir = next_dir.read_dir();
+            let next_dir = match next_dir {
+                Ok(next_dir) => next_dir,
+                Err(err) => return Some(Err(FilesError::Io(err))),
+            };
+            self.dir_iter = next_dir;
+            next_entry = self.dir_iter.next();
+        }
+
+        match next_entry.unwrap() {
+            Ok(entry) => Some(Ok(entry)),
+            Err(err) => Some(Err(FilesError::Io(err))),
+        }
+    }
+
+    fn next_file(&mut self, entry: DirEntry) -> Option<PathBuf> {
+        let path = entry.path();
+
+        if path.is_dir() {
+            self.dirs.push_back(path);
+            return None;
+        }
+
+        if path.is_file() {
+            return Some(path);
+        }
+
+        None
     }
 }
 
 impl Iterator for Files {
-    type Item = PathBuf;
+    type Item = Result<PathBuf, FilesError>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        todo!()
+        let mut next_file: Option<PathBuf> = None;
+
+        while next_file.is_none() {
+            let next_entry = self.next_entry()?;
+            next_file = match next_entry {
+                Err(err) => return Some(Err(err)),
+                Ok(entry) => self.next_file(entry),
+            };
+        }
+
+        let next_file = next_file.unwrap();
+        assert!(next_file.is_file());
+        Some(Ok(next_file))
     }
 }
