@@ -10,6 +10,7 @@ impl Ignore {
 
         // https://github.com/github/gitignore
         // only lowercase (to lowercase)
+        dirs.insert(".angular");
         dirs.insert(".cache");
         dirs.insert(".docusaurus");
         dirs.insert(".dynamodb");
@@ -21,6 +22,7 @@ impl Ignore {
         dirs.insert(".mtj.tmp");
         dirs.insert(".mvn");
         dirs.insert(".next");
+        dirs.insert(".ng");
         dirs.insert(".npm");
         dirs.insert(".nuxt");
         dirs.insert(".serverless");
@@ -47,9 +49,12 @@ impl Ignore {
         dirs.insert("node_modules");
         dirs.insert("obj");
         dirs.insert("out");
+        dirs.insert("out-tsc");
         dirs.insert("release");
         dirs.insert("releases");
         dirs.insert("target");
+        dirs.insert("test-output");
+        dirs.insert("tmp");
         dirs.insert("web_modules");
         dirs.insert("win32");
         dirs.insert("x64");

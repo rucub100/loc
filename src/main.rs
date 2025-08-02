@@ -30,7 +30,14 @@ fn main() {
             Ok(path) => {
                 if let Some(source_file) = SourceFile::from_path(path) {
                     files_count += 1;
-                    println!("{:?}: {:?}", source_file.get_lang(), source_file.get_path());
+                    let loc = source_file.loc();
+                    loc_count += loc;
+                    println!(
+                        "{:?}: {:?} - {:?}",
+                        source_file.get_lang(),
+                        source_file.get_path(),
+                        loc
+                    );
                 }
             }
         }
@@ -38,6 +45,7 @@ fn main() {
 
     let elapsed = stop_watch.elapsed();
     println!("Processed {files_count} files");
+    println!("Lines of code: {loc_count}");
     if errors_count > 0 {
         eprintln!("Errors count: {errors_count}");
     }

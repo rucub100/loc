@@ -1,3 +1,4 @@
+use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
@@ -96,7 +97,14 @@ impl SourceFile {
     }
 
     pub fn loc(&self) -> u32 {
-        // TODO
-        0
+        let content = read_to_string(&self.path);
+
+        match content {
+            Ok(content) => content.lines().count() as u32,
+            Err(e) => {
+                eprintln!("{}", e);
+                0
+            }
+        }
     }
 }
