@@ -1,5 +1,6 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
+#[derive(Debug)]
 pub enum ProgrammingLanguage {
     Ada,
     Assembly,
@@ -43,15 +44,6 @@ pub enum ProgrammingLanguage {
     Zig,
 }
 
-// TODO
-pub struct SourceFile {
-    path: PathBuf,
-    lang: ProgrammingLanguage,
-}
-
-// TODO: GitIgnore
-// https://github.com/github/gitignore
-
 impl ProgrammingLanguage {
     pub const fn well_known_extensions(&self) -> Option<&'static [&'static str]> {
         match self {
@@ -75,7 +67,36 @@ impl ProgrammingLanguage {
             "js" | "mjs" | "cjs" => Some(ProgrammingLanguage::JavaScript),
             "rs" => Some(ProgrammingLanguage::Rust),
             "ts" => Some(ProgrammingLanguage::TypeScript),
+            "java" => Some(ProgrammingLanguage::Java),
             _ => None,
         }
+    }
+}
+
+pub struct SourceFile {
+    path: PathBuf,
+    lang: ProgrammingLanguage,
+}
+
+impl SourceFile {
+    pub fn from_path(path: PathBuf) -> Option<SourceFile> {
+        assert!(path.is_file());
+        let extension = path.extension()?.to_str()?;
+        let lang = ProgrammingLanguage::from_extension(extension)?;
+
+        Some(SourceFile { path, lang })
+    }
+
+    pub fn get_path(&self) -> &Path {
+        &self.path
+    }
+
+    pub fn get_lang(&self) -> &ProgrammingLanguage {
+        &self.lang
+    }
+
+    pub fn loc(&self) -> u32 {
+        // TODO
+        0
     }
 }

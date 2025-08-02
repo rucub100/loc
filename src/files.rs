@@ -3,14 +3,18 @@ use std::env::current_dir;
 use std::fs::{DirEntry, ReadDir};
 use std::path::PathBuf;
 
+use crate::ignore::Ignore;
+
 #[derive(Debug)]
 pub enum FilesError {
     Io(std::io::Error),
 }
 
 pub struct Files {
+    root_dir: PathBuf,
     dirs: VecDeque<PathBuf>,
     dir_iter: ReadDir,
+    ignore: Option<Ignore>,
 }
 
 impl Files {
@@ -19,8 +23,10 @@ impl Files {
         let dir_iter = current_dir.read_dir().map_err(FilesError::Io)?;
 
         Ok(Files {
+            root_dir: current_dir,
             dirs: VecDeque::new(),
             dir_iter,
+            ignore: Some(Ignore::new()),
         })
     }
 
@@ -49,7 +55,7 @@ impl Files {
         let path = entry.path();
 
         if path.is_dir() {
-            self.dirs.push_back(path);
+            self.add_dir(path);
             return None;
         }
 
@@ -58,6 +64,18 @@ impl Files {
         }
 
         None
+    }
+
+    fn add_dir(&mut self, path: PathBuf) {
+        if let Some(ref ignore) = self.ignore
+            && let Some(file_name) = path.file_name()
+            && let Some(dir_name) = file_name.to_str()
+            && ignore.should_ignore_dir(dir_name)
+        {
+            return;
+        }
+
+        self.dirs.push_back(path);
     }
 }
 
