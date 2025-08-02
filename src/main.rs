@@ -4,6 +4,7 @@ use std::time::Instant;
 use crate::files::Files;
 
 mod files;
+mod source_file;
 
 fn main() {
     let stop_watch = Instant::now();
@@ -14,9 +15,10 @@ fn main() {
         exit(1);
     }
 
-    let mut files_count = 0u32;
-    let mut errors_count = 0u32;
-    for file in files.unwrap() {
+    let files = files.unwrap();
+    let mut files_count: u32 = 0;
+    let mut errors_count: u32 = 0;
+    for file in files {
         match file {
             Err(e) => {
                 errors_count += 1;
@@ -31,5 +33,8 @@ fn main() {
 
     let elapsed = stop_watch.elapsed();
     println!("Processed {files_count} files");
+    if errors_count > 0 {
+        eprintln!("Errors count: {errors_count}");
+    }
     println!("Finished in {elapsed:?}");
 }
