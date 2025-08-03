@@ -1,4 +1,4 @@
-use std::fs::read_to_string;
+use tokio::fs::read_to_string;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
@@ -96,8 +96,8 @@ impl SourceFile {
         &self.lang
     }
 
-    pub fn loc(&self) -> u32 {
-        let content = read_to_string(&self.path);
+    pub async fn loc(&self) -> u32 {
+        let content = read_to_string(&self.path).await;
 
         match content {
             Ok(content) => content.lines().count() as u32,

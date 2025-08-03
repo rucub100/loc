@@ -1,14 +1,15 @@
+use crate::files::{Files, FilesError};
+use crate::source_file::SourceFile;
 use std::process::exit;
 use std::time::Instant;
-
-use crate::files::Files;
-use crate::source_file::SourceFile;
+use tokio::task::JoinSet;
 
 mod files;
 mod ignore;
 mod source_file;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let stop_watch = Instant::now();
     let files = Files::new();
 
@@ -18,28 +19,48 @@ fn main() {
     }
 
     let files = files.unwrap();
+    let mut handles = JoinSet::new();
+    for file in files {
+        handles.spawn(async move {
+            let result: Option<Result<u32, FilesError>> = match file {
+                Err(e) => Some(Err(e)),
+                Ok(path) => {
+                    if let Some(source_file) = SourceFile::from_path(path) {
+                        let loc = source_file.loc().await;
+
+                        println!(
+                            "{:?}: {:?} - {:?}",
+                            source_file.get_lang(),
+                            source_file.get_path(),
+                            loc
+                        );
+
+                        Some(Ok(loc))
+                    } else {
+                        None
+                    }
+                }
+            };
+
+            result
+        });
+    }
+
+    let results = handles.join_all().await;
     let mut files_count: u32 = 0;
     let mut errors_count: u32 = 0;
     let mut loc_count: u32 = 0;
-    for file in files {
-        match file {
-            Err(e) => {
-                errors_count += 1;
+    for result in results {
+        match result {
+            Some(Ok(loc)) => {
+                files_count += 1;
+                loc_count += loc;
+            }
+            Some(Err(e)) => {
                 eprintln!("{e:?}");
+                errors_count += 1;
             }
-            Ok(path) => {
-                if let Some(source_file) = SourceFile::from_path(path) {
-                    files_count += 1;
-                    let loc = source_file.loc();
-                    loc_count += loc;
-                    println!(
-                        "{:?}: {:?} - {:?}",
-                        source_file.get_lang(),
-                        source_file.get_path(),
-                        loc
-                    );
-                }
-            }
+            None => continue,
         }
     }
 
