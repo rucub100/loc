@@ -18,8 +18,8 @@ pub struct Files {
 }
 
 impl Files {
-    pub fn new() -> Result<Self, FilesError> {
-        let current_dir = current_dir().map_err(FilesError::Io)?;
+    pub fn new(path: Option<PathBuf>) -> Result<Self, FilesError> {
+        let current_dir = path.unwrap_or(current_dir().map_err(FilesError::Io)?);
         let dir_iter = current_dir.read_dir().map_err(FilesError::Io)?;
 
         Ok(Files {

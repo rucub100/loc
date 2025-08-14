@@ -1,5 +1,7 @@
 use crate::files::{Files, FilesError};
 use crate::source_file::SourceFile;
+use clap::Parser;
+use std::path::PathBuf;
 use std::process::exit;
 use std::time::Instant;
 use tokio::task::JoinSet;
@@ -8,10 +10,18 @@ mod files;
 mod ignore;
 mod source_file;
 
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    #[arg(short, long)]
+    path: Option<PathBuf>,
+}
+
 #[tokio::main]
 async fn main() {
     let stop_watch = Instant::now();
-    let files = Files::new();
+    let args = Args::parse();
+    let files = Files::new(args.path);
 
     if let Err(e) = files {
         eprintln!("{e:?}");
