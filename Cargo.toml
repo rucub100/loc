@@ -1,6 +1,7 @@
 [package]
 name = "loc"
 authors = ["Ruslan Curbanov"]
+description = "A simple CLI tool for counting lines of code, written in Rust"
 version = "0.1.0"
 edition = "2024"
 

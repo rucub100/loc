@@ -12,7 +12,10 @@ mod ignore;
 mod source_file;
 
 #[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
+#[command(
+    version,
+    long_about = "A simple CLI tool for counting lines of code, written in Rust."
+)]
 struct Args {
     #[arg(
         short,
