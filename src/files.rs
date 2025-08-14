@@ -18,15 +18,15 @@ pub struct Files {
 }
 
 impl Files {
-    pub fn new(path: Option<PathBuf>) -> Result<Self, FilesError> {
-        let current_dir = path.unwrap_or(current_dir().map_err(FilesError::Io)?);
-        let dir_iter = current_dir.read_dir().map_err(FilesError::Io)?;
+    pub fn new(path: Option<PathBuf>, ignore: Option<Ignore>) -> Result<Self, FilesError> {
+        let root_dir = path.unwrap_or(current_dir().map_err(FilesError::Io)?);
+        let dir_iter = root_dir.read_dir().map_err(FilesError::Io)?;
 
         Ok(Files {
-            root_dir: current_dir,
+            root_dir,
             dirs: VecDeque::new(),
             dir_iter,
-            ignore: Some(Ignore::new()),
+            ignore,
         })
     }
 
@@ -67,6 +67,7 @@ impl Files {
     }
 
     fn add_dir(&mut self, path: PathBuf) {
+        // TODO: use .gitignore if available
         if let Some(ref ignore) = self.ignore
             && let Some(file_name) = path.file_name()
             && let Some(dir_name) = file_name.to_str()

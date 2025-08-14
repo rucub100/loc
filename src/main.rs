@@ -1,4 +1,5 @@
 use crate::files::{Files, FilesError};
+use crate::ignore::Ignore;
 use crate::source_file::SourceFile;
 use clap::Parser;
 use std::path::PathBuf;
@@ -13,15 +14,33 @@ mod source_file;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-    #[arg(short, long)]
+    #[arg(
+        short,
+        long,
+        help = "Directory to scan for source files (defaults to current directory)"
+    )]
     path: Option<PathBuf>,
+    #[arg(
+        long,
+        short,
+        visible_alias = "disable-ignore",
+        help = "Disable default ignore patterns"
+    )]
+    no_ignore: bool,
+    /* TODO: add verbose, summary (opposite of verbose, i.e. even shorter than default), language (to filter) */
 }
 
 #[tokio::main]
 async fn main() {
     let stop_watch = Instant::now();
     let args = Args::parse();
-    let files = Files::new(args.path);
+    let root = args.path;
+    let ignore = if args.no_ignore {
+        None
+    } else {
+        Some(Ignore::new())
+    };
+    let files = Files::new(root, ignore);
 
     if let Err(e) = files {
         eprintln!("{e:?}");
